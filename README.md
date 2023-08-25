@@ -12,9 +12,11 @@ This repository contains a Unity project that implements a 2D particle simulatio
 
 ## Demo Video
 
-A demo video of the particle simulation in action is available in the `ImagesVideos` folder in the root of the repository. The video, named `512x512.mp4`, shows an example simulation in a grid of 512x512. In the video, particles are sprayed in a rainbow coloring and the source, initial direction, and velocity are moved around.
+A demo video of the particle simulation in action is available in the `ImagesVideos` folder in the root of the repository. The video, named `512x512.mp4`, shows an example simulation in a grid of 512x512. In the video, particles are sprayed in a rainbow coloring and the source, initial direction, and velocity are moved around. 
+Higher quality version in ImagesVideos to download. The embedding only allows small files.
 
-!Demo Video /ImagesVideos/512x512.mp4
+https://github.com/Kryolyz/UnityGPUParticleSimulation/assets/33807498/2241f356-1f0b-403a-91ea-3164bd1cec1c
+
 
 
 ## Usage
