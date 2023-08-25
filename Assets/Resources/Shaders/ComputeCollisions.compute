@@ -1,0 +1,106 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma multi_compile _ UPDATE_VELOCITY
+
+#include "./include/Particle.cginc"
+
+RWStructuredBuffer<Particle> Particles;
+Buffer<int> ParticleList;
+Buffer<int> ParticleListHead;
+
+
+bool IsNaN(float x)
+{
+    return !(x < 0.f || x > 0.f || x == 0.f);
+}
+
+
+void CollideParticles(inout Particle particle, Particle otherParticle)
+{
+    float2 p01 = otherParticle.tempP - particle.tempP;
+    float d01 = length(p01);
+    
+    if (d01 < (particle.size + otherParticle.size))
+    {
+#if UPDATE_VELOCITY
+        // impulse = - (1 + restitutionCoefficient) * dot(v_rel, n) / (1 / m1 + 1 / m2)
+        if (particle.collisions == 1 && otherParticle.collisions == 1)
+        {
+            //float v0 = dot(particle.p, n);
+            //float v1 = dot(otherParticle.p, n);
+            
+            //float m0 = particle.mass;
+            //float m1 = otherParticle.mass;
+        
+            //float impulse = ((m0 - m1) * v0 + 2.0 * m1 * v1) / (m0 + m1);
+            //particle.newV += (impulse - v0) * n;
+        
+            float2 vRel = otherParticle.v - particle.v;
+            float directionalStrength = dot(vRel, n);
+            float impulse = (1 + restitutionCoefficient) * 0.5f * directionalStrength;// / (1 / particle.mass + 1 / otherParticle.mass);
+
+            particle.newV += impulse * n;
+        }
+#else
+        {
+            float2 n = normalize(p01);
+            float2 correction = -n * (particle.size + otherParticle.size - d01) * 0.25f * 0.5f;
+            particle.p += correction;
+            //particle.a += 
+            particle.collisions += 1;
+        }
+#endif
+    }
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    int index = IndexFromXY(id.xy);
+    Particle particle = Particles[index];
+    
+    if (particle.type == PARTICLE_TYPE_NONE)
+        return;
+    
+    int3 gridIndex = GridIndex(particle.p);
+    uint status;
+    int indexFromGrid = ParticleListHead[gridIndex.z];
+    
+#if !UPDATE_VELOCITY
+    particle.collisions = 0;
+    particle.p = particle.tempP;
+    //Particles[index] = particle;
+    //return;
+#else
+    particle.newV = particle.v;
+    if (particle.collisions == 1)
+    {
+#endif
+    for (int i = max(gridIndex.y - 1, 0); i <= min(gridIndex.y + 1, round(TextureWidth / GridSize) - 1); ++i)
+    {
+        for (int j = max(gridIndex.x - 1, 0); j <= min(gridIndex.x + 1, round(TextureWidth / GridSize) - 1); ++j)
+        {
+            int currentGridIndex = (i * TextureWidth / GridSize + j);
+            int nextParticleID = ParticleListHead.Load(currentGridIndex);
+            
+            while (nextParticleID >= 0)
+            {
+                if (nextParticleID != index)
+                {
+                    //particle.temperature = 1.0f;
+                    Particle otherParticle = Particles[nextParticleID];
+                    CollideParticles(particle, otherParticle);
+                }
+                nextParticleID = ParticleList.Load(nextParticleID);
+            }
+        }
+    }
+    
+#if UPDATE_VELOCITY
+    }
+#else
+    clampParticle(particle.p, particle.oldP, particle.size);
+#endif
+    
+    Particles[index] = particle;
+}

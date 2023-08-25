@@ -1,0 +1,83 @@
+#pragma kernel CSMain
+#include "include/Particle.cginc"
+
+RWStructuredBuffer<Particle> Particles;
+
+float2 _Center;
+float _Radius;
+float _Thickness;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    // Calculate the distance from the center to the current pixel.
+    float distance = length(float2(127.5f, 127.5f) - id.xy);
+
+    // Initialize the particle position and velocity. 
+    float2 position = float2(0, 0);
+    float2 velocity = float2(0, 0);
+    float size = 1.0f;
+    float mass = 1.0f;
+    
+    float temperature = 0.0f;
+    
+    int type = PARTICLE_TYPE_NONE;
+    int collisions = 0;
+
+    //if (id.x == 0)
+    //{
+    //    position = float(0, )
+    //} else if (id.x == 255)
+    
+    //if (id.x == 0 && id.y < 20)
+    //{
+    //    position = float2(id.x * 0.01f, 0) + float2(255.0, 0.0));
+    //    type = PARTICLE_TYPE_DIRT;
+    //}
+    
+    if (id.x % 4 == 0 && id.y % 4 == 0)
+    {
+        position = id.xy + float2(3.0, 0);
+        type = PARTICLE_TYPE_DIRT;
+    }
+    //temperature = 1.0f;
+    
+    //if (id.y < 100 && id.y > 98)
+    //{
+    //    if (id.x == 50)
+    //    {
+    //        position = id.xy * size * 2.0f + _Center;
+    //        velocity = float2(40.0f, 0.0f);
+    //        type = PARTICLE_TYPE_DIRT;
+    //    }
+    //    else if (id.x == 100)
+    //    {
+    //        position = id.xy * size * 2.0f + _Center;
+    //        velocity = float2(-40.0f, 0.0f);
+    //        type = PARTICLE_TYPE_DIRT;
+    //    }
+    //}
+    
+    // Check if the distance is within the thickness of the circle.
+    //if (abs(distance - _Radius) < _Thickness)
+    //{
+    //    position = id.xy * size * 2.01 + _Center;
+    //    //if (id.x < 100)
+    //    velocity = float2(50.0f, 0.0f);
+    //    //else
+    //    //velocity = float2(-50.0f, 0.0f);
+    //    type = PARTICLE_TYPE_DIRT;
+    //}
+
+    uint index = IndexFromXY(id.xy);
+    
+    // Store the particle data in the result texture.
+    Particles[index].newP = position;
+    Particles[index].newV = velocity;
+    Particles[index].size = size;
+    Particles[index].mass = mass;
+    Particles[index].temperature = temperature;
+    Particles[index].type = type;
+    Particles[index].collisions = 0;
+}
+

@@ -1,0 +1,19 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "./include/Particle.cginc"
+
+RWBuffer<int> ParticleListHead;
+RWBuffer<int> ParticleList;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    int index = IndexFromXY(id.xy);
+    ParticleListHead[index] = -1;
+    
+    if (id.x < uint(ParticleBufferWidth) && id.y < uint(ParticleBufferWidth))
+    {
+        index = IndexFromXY(id.xy);
+        ParticleList[index] = -1;
+    }
+}

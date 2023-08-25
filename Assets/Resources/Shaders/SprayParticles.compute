@@ -1,0 +1,77 @@
+#pragma kernel CSMain
+#include "./include/Particle.cginc"
+#include "./include/Utility.cginc"
+
+RWStructuredBuffer<Particle> Particles;
+
+float thickness;
+float2 initialVelocity;
+float2 initialPosition;
+int spawnedParticlesCount;
+float dt;
+
+float2 rotate90(float2 v)
+{
+    float2x2 rotationMatrix = float2x2(0, -1, 1, 0);
+    return mul(rotationMatrix, v);
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{    
+    float2 position = float2(0.0f, 0.0f);
+    float2 oldPosition = float2(0.0f, 0.0f);
+    float size = 0.56f;
+    float mass = 1.0f;
+    
+    float temperature = 0.0f;
+    
+    int type = PARTICLE_TYPE_NONE;
+    int collisions = 0;
+    
+    uint index = IndexFromXY(id.xy);
+    
+    if (index >= uint(spawnedParticlesCount) && index < uint(spawnedParticlesCount + thickness))
+    {
+        int sprayIndex = index - spawnedParticlesCount;
+        float2 normalizedLineDirection = normalize(rotate90(initialVelocity));
+        position = initialPosition
+                - normalizedLineDirection * (float(thickness) / 2.0f * size * 2) 
+        
+                + normalizedLineDirection * sprayIndex * size * 2;
+        oldPosition = position - initialVelocity * dt;
+        type = PARTICLE_TYPE_DIRT;
+        
+        float4 color = RAINBOW(index, 0.005);
+        
+        Particles[index].p = position;
+        Particles[index].tempP = position;
+        Particles[index].oldP = oldPosition;
+        Particles[index].size = size;
+        Particles[index].mass = mass;
+        Particles[index].temperature = temperature;
+        Particles[index].color = color;
+        Particles[index].type = type;
+        Particles[index].collisions = 0;
+    }
+    else if (index > uint(spawnedParticlesCount))
+    {   
+        Particles[index].p = position;
+        Particles[index].oldP = oldPosition;
+        Particles[index].size = size;
+        Particles[index].mass = mass;
+        Particles[index].temperature = temperature;
+        Particles[index].type = type;
+        Particles[index].collisions = 0;
+    }
+    //else if (index < uint(spawnedParticlesCount))
+    //{
+    //    return;
+    //} else
+    //{
+    //    position = Particles[index].newP;
+    //    velocity = Particles[index].newV;
+    //    type = Particles[index].type;
+    //}
+    
+}

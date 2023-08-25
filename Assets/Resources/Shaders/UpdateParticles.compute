@@ -1,0 +1,37 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "./include/Particle.cginc"
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWStructuredBuffer<Particle> Particles;
+RWBuffer<int> ParticleList;
+RWBuffer<int> ParticleListHead;
+
+float dt;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint index = IndexFromXY(id.xy);
+    Particle particle = Particles[index];
+    
+    if (particle.type == PARTICLE_TYPE_NONE)
+        return;
+    
+    float2 lastUpdateMove = particle.p - particle.oldP;
+    float2 newPosition = particle.p + lastUpdateMove + particle.a * (dt * dt);
+    
+    particle.oldP = particle.p;
+    particle.p = newPosition;
+    particle.tempP = newPosition;
+    particle.a = float2(0, 0);
+    
+    clampParticle(particle.p, particle.oldP, particle.size);
+    Particles[index] = particle;
+    
+    int3 gridIndex = GridIndex(particle.p);
+    int originalListIndex;
+    InterlockedExchange(ParticleListHead[gridIndex.z], index, originalListIndex);
+    ParticleList[index] = originalListIndex;
+}

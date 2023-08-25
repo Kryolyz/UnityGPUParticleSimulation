@@ -1,0 +1,14 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "../include/Particle.cginc"
+
+float2 mousePosition;
+float grabRange;
+RWBuffer<int> grabbedParticles;
+StructuredBuffer<Particle> particles;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    
+}

@@ -1,0 +1,30 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "include/Particle.cginc"
+
+StructuredBuffer<Particle> Particles;
+RWTexture2D<float4> Result;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    int index = IndexFromXY(id.xy);
+    Particle particle = Particles[index];
+    
+    if (particle.type == PARTICLE_TYPE_NONE)
+        return;
+    
+    float color = 0;
+    
+    float2 position = particle.p;
+    float2 velocity = particle.v / 5.f + 0.5f;
+    uint2 pixel = int2(round(position.x), round(position.y));
+    
+    if (particle.temperature > 0.9f)
+        color = 1;
+    
+    //int3 gridIndex = GridIndex(id.xy);
+    
+    //Result[pixel] = float4(color, 0, 1, 1);
+    Result[pixel] = float4(color, 1, velocity.x, 1);
+}

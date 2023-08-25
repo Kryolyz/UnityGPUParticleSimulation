@@ -1,0 +1,19 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "./include/Particle.cginc"
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWStructuredBuffer<Particle> Particles;
+float2 g;
+
+[numthreads(8,8,1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint index = IndexFromXY(id.xy);
+    
+    if (Particles[index].type == PARTICLE_TYPE_NONE)
+        return;
+    
+    Particles[index].a += g;
+}

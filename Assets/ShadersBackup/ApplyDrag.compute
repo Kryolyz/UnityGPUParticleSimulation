@@ -1,0 +1,19 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "include/Particle.cginc"
+
+RWStructuredBuffer<Particle> Particles;
+float drag;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint index = IndexFromXY(id.xy);
+    
+    if (Particles[index].type == PARTICLE_TYPE_NONE)
+        return;
+	
+    float2 velocity = Particles[index].newV;
+    float2 dragForce = - velocity * length(velocity) * drag;
+    Particles[index].a += dragForce;
+}
